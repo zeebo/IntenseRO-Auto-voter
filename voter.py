@@ -2,23 +2,32 @@ import urllib
 import Cookie
 import httplib
 import re
+import sys
 import optparse
 
 host = 'www.register.intense-ro.net'
 
 def download_cookie(username, password, debug_level = 0):
-  request = '/?module=account&action=login'
+  request = '/?module=account&action=login&return_url='
   data = {
     'username': username,
     'password': password,
     'server': 'IntenseRO',
+    #'return_url': '/',
+  }
+  headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
   }
   
   #Set up connection
   connection = httplib.HTTPConnection(host)
   connection.set_debuglevel(debug_level)
-  connection.request("POST", request, urllib.urlencode(data))
+  connection.request("POST", request, urllib.urlencode(data), headers)
   response = connection.getresponse()
+  
+  if response.status != 302:
+    print "Login error."
+    return None
   
   #Get the session cookie
   cookie_header = response.getheader('set-cookie', '')
@@ -46,7 +55,7 @@ def get_urls(cookie, debug_level = 0):
     return matches.groups()
   else:
     print "Nothing to vote for. Try again later."
-    return list()
+    return None
 
 def do_votes(cookie, urls, debug_level = 0):
   for request in urls:
@@ -71,7 +80,16 @@ if __name__ == "__main__":
   username, password, debug_level = args[0], args[1], options.debug
   
   cookie = download_cookie(username, password, debug_level)
+  
+  if cookie is None:
+    sys.exit(1)
+  
   urls = get_urls(cookie, debug_level)
   
+  if urls is None:
+    sys.exit(1)
+  
   do_votes(cookie, urls, debug_level)
+  
+  sys.exit(0)
   
