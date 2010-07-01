@@ -1,3 +1,9 @@
+#!/usr/bin/python
+#
+# Voter.py - IntenseRO Automatic Voter
+# by zeebo
+#
+
 import urllib
 import Cookie
 import httplib
@@ -65,7 +71,7 @@ def do_votes(cookie, urls, debug_level = 0):
     
     response = connection.getresponse()
     if response.status == 302:
-      print "Sucessfully voted.."
+      print "Sucessfully voted for %s" % request
     else:
       print "Problem voting for %s" % request
 
@@ -75,7 +81,9 @@ if __name__ == "__main__":
   (options, args) = parser.parse_args()
 
   if len(args) != 2:
-    parser.error("Incorrect number of arguments.")
+    parser.print_help()
+    print "\nInvalid number of arguments.\n"
+    sys.exit(1)
   
   username, password, debug_level = args[0], args[1], options.debug
   
