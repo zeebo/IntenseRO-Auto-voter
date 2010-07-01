@@ -2,7 +2,7 @@ import urllib
 import Cookie
 import httplib
 import re
-import argparse
+import optparse
 
 host = 'www.register.intense-ro.net'
 
@@ -61,14 +61,17 @@ def do_votes(cookie, urls, debug_level = 0):
       print "Problem voting for %s" % request
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description="IntenseRO Auto Voter")
-  parser.add_argument('username', metavar='user', type=str, help="Username")
-  parser.add_argument('password', metavar='pass', type=str, help="Password")
-  parser.add_argument('--debug', dest='debug_level', type=int, help="The debug level. Integer >= 0", default = 0)
-  args = parser.parse_args()
+  parser = optparse.OptionParser("usage: %prog [options] username password")
+  parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="Turns on verbose debugging", default=0)
+  (options, args) = parser.parse_args()
+
+  if len(args) != 2:
+    parser.error("Incorrect number of arguments.")
   
-  cookie = download_cookie(args.username, args.password, args.debug_level)
-  urls = get_urls(cookie, args.debug_level)
+  username, password, debug_level = args[0], args[1], options.debug
   
-  do_votes(cookie, urls, args.debug_level)
+  cookie = download_cookie(username, password, debug_level)
+  urls = get_urls(cookie, debug_level)
+  
+  do_votes(cookie, urls, debug_level)
   
