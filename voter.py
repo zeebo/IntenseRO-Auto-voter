@@ -49,10 +49,10 @@ def get_urls(cookie, debug_level = 0):
   body = response.read()
   
   #Search for "/?module=vote&action=out&id=\d+"
-  matches = re.search(r'"(/\?module=vote&action=out&id=\d+)"', body)
+  matches = re.findall(r'"(/\?module=vote&action=out&id=\d+)"', body)
   
-  if matches:
-    return matches.groups()
+  if len(matches):
+    return matches
   else:
     print "Nothing to vote for. Try again later."
     return None
