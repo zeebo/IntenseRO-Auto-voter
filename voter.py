@@ -10,6 +10,7 @@ import httplib
 import re
 import sys
 import optparse
+import Tkinter
 
 host = 'www.register.intense-ro.net'
 
@@ -75,7 +76,7 @@ def do_votes(cookie, urls, debug_level = 0):
     else:
       print "Problem voting for %s" % request
 
-if __name__ == "__main__":
+def main():
   parser = optparse.OptionParser("usage: %prog [options] username password")
   parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="Turns on verbose debugging", default=0)
   (options, args) = parser.parse_args()
@@ -100,4 +101,35 @@ if __name__ == "__main__":
   do_votes(cookie, urls, debug_level)
   
   sys.exit(0)
+
+class GUIFramework(Tkinter.Frame):
+  def __init__(self, master=None):
+    Tkinter.Frame.__init__(self, master)
+    
+    self.master.title("Voter")
+    self.grid(padx=10, pady=10)
+    self.CreateWidgets()
+    
+  def CreateWidgets(self):
+    self.usernameLabel = Tkinter.Label(self, text="Username ")
+    self.usernameLabel.grid(row=0, column=0)
+    
+    self.usernameEdit = Tkinter.Entry(self)
+    self.usernameEdit.grid(row=0, column=1, columnspan=2)
+    
+    self.passwordLabel = Tkinter.Label(self, text="Password ")
+    self.passwordLabel.grid(row=1, column=0)
+    
+    self.passwordEdit = Tkinter.Entry(self)
+    self.passwordEdit.grid(row=1, column=1, columnspan=2)
+    
+    self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote)
+    self.voteButton.grid(row=2, column=2, columnspan=1)
+  
+  def doVote(self):
+    print "Login info: %s/%s" % (self.usernameEdit.get(), self.passwordEdit.get())
+
+if __name__ == "__main__":
+  frame = GUIFramework()
+  frame.mainloop()
   
