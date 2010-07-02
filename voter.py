@@ -109,6 +109,8 @@ class GUIFramework(Tkinter.Frame):
     self.master.title("Voter")
     self.grid(padx=10, pady=10)
     self.CreateWidgets()
+    self.master.geometry('+500-500')
+    self.master.lift()
     
   def CreateWidgets(self):
     self.usernameLabel = Tkinter.Label(self, text="Username ")
@@ -124,7 +126,7 @@ class GUIFramework(Tkinter.Frame):
     self.passwordEdit.grid(row=1, column=1, columnspan=2)
     
     self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote)
-    self.voteButton.grid(row=2, column=2, columnspan=1)
+    self.voteButton.grid(row=2, column=2)
   
   def doVote(self):
     print "Login info: %s/%s" % (self.usernameEdit.get(), self.passwordEdit.get())
