@@ -11,6 +11,9 @@ import re
 import sys
 import optparse
 import Tkinter
+import tkMessageBox
+import threading
+import time
 
 host = 'www.register.intense-ro.net'
 
@@ -33,7 +36,6 @@ def download_cookie(username, password, debug_level = 0):
   response = connection.getresponse()
   
   if response.status != 302:
-    print "Login error."
     return None
   
   #Get the session cookie
@@ -61,83 +63,158 @@ def get_urls(cookie, debug_level = 0):
   if len(matches):
     return matches
   else:
-    print "Nothing to vote for. Try again later."
     return None
+
+def do_vote(cookie, request, debug_level = 0):
+  connection = httplib.HTTPConnection(host)
+  connection.set_debuglevel(debug_level)
+  connection.request("GET", request, headers = {'Cookie': cookie})  
+  response = connection.getresponse()
+  return response.status == 302
 
 def do_votes(cookie, urls, debug_level = 0):
   for request in urls:
-    connection = httplib.HTTPConnection(host)
-    connection.set_debuglevel(debug_level)
-    connection.request("GET", request, headers = {'Cookie': cookie})
-    
-    response = connection.getresponse()
-    if response.status == 302:
-      print "Sucessfully voted for %s" % request
+    retval = do_vote(cookie, request, debug_level)
+    if retval:
+      print "Voted sucessfully for %s" % request
     else:
-      print "Problem voting for %s" % request
+      print "Unable to vote for %s" % request
 
 def main():
-  parser = optparse.OptionParser("usage: %prog [options] username password")
+  parser = optparse.OptionParser("usage: %prog [-d] [-c username password]")
   parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="Turns on verbose debugging", default=0)
+  parser.add_option('-c', '--command', dest='command', action='store_true', help="Runs the program as a command line interface", default=False)
   (options, args) = parser.parse_args()
 
+  if options.command:
+    command_main(parser, options, args)
+  else:
+    frame = GUIFramework()
+    frame.mainloop()
+
+def command_main(parser, options, args):
   if len(args) != 2:
     parser.print_help()
     print "\nInvalid number of arguments.\n"
     sys.exit(1)
-  
-  username, password, debug_level = args[0], args[1], options.debug
-  
-  cookie = download_cookie(username, password, debug_level)
-  
+      
+  username, password, debug_level = args[0], args[1], options.debug  
+  cookie = download_cookie(username, password, debug_level)  
   if cookie is None:
+    print "Authentication error"
     sys.exit(1)
-  
-  urls = get_urls(cookie, debug_level)
-  
+  urls = get_urls(cookie, debug_level)  
   if urls is None:
-    sys.exit(1)
-  
-  do_votes(cookie, urls, debug_level)
-  
+    print "Nothing to vote for"
+    sys.exit(1)  
+  do_votes(cookie, urls, debug_level)  
   sys.exit(0)
+
+class ProgressBar(Tkinter.Canvas):
+  def __init__(self, master, maximum, *args, **kwargs):
+    Tkinter.Canvas.__init__(self, *args, **kwargs)
+    self.maximum = max(1, maximum)
+    self.current = 0
+    self.text = ''
+    self.width = kwargs.get('width', self.winfo_width())
+    self.height = kwargs.get('height', self.winfo_height())
+    self.update()
+  
+  def set_maximum(self, number):
+    self.maximum = number
+    self.update()
+  
+  def set(self, number, text):
+    self.text = text
+    self.current = number
+    self.update()
+  
+  def set_text(self, value):
+    self.text = value
+    self.update()
+    
+  def set_progress(self, value):
+    self.current = value
+    self.update()
+  
+  def update(self):
+    self.delete(Tkinter.ALL)
+    self.create_rectangle(3, 3, self.width, self.height)
+    if self.current > 0:
+      self.create_rectangle(4, 4, self.width * float(self.current)/float(self.maximum), self.height-1, fill="blue", outline="blue")
+    self.create_text(self.width / 2, self.height / 2, text=self.text, fill="black", font=("Tahoma", "12"))
+    self.master.update_idletasks()
 
 class GUIFramework(Tkinter.Frame):
   def __init__(self, master=None):
     Tkinter.Frame.__init__(self, master)
-    
+    self.master.resizable(0,0)
     self.master.title("Voter")
-    self.grid(padx=10, pady=10)
+    self.grid(padx=5, pady=5)
     self.CreateWidgets()
-    self.CenterWindow()
-    
-  def CenterWindow(self, width=265, height=104):
-    mw = self.master.winfo_screenwidth()
-    mh = self.master.winfo_screenheight()
-    x, y = (mw - width)/2, (mh - height)/2
-    print x, y
-    self.master.geometry('+%d+%d' % (x, y))
+    self.columnconfigure(1,weight=1)
     
   def CreateWidgets(self):
-    self.usernameLabel = Tkinter.Label(self, text="Username ")
-    self.usernameLabel.grid(row=0, column=0)
+    Tkinter.Label(self, text="Username ").grid(row=0, column=0, sticky=Tkinter.W)
+    self.username = Tkinter.Entry(self)
+    self.username.grid(row=0, column=1, columnspan=2, sticky=Tkinter.E)
+    self.username.focus_set()
     
-    self.usernameEdit = Tkinter.Entry(self)
-    self.usernameEdit.grid(row=0, column=1, columnspan=2)
+    Tkinter.Label(self, text="Password ").grid(row=1, column=0, sticky=Tkinter.W)
+    self.password = Tkinter.Entry(self)
+    self.password.grid(row=1, column=1, columnspan=2, sticky=Tkinter.E)
     
-    self.passwordLabel = Tkinter.Label(self, text="Password ")
-    self.passwordLabel.grid(row=1, column=0)
+    self.progress = ProgressBar(self, maximum=14, width=250, height=30)
+    self.progress.grid(row=2, column=0, columnspan=2, sticky=Tkinter.W)
     
-    self.passwordEdit = Tkinter.Entry(self)
-    self.passwordEdit.grid(row=1, column=1, columnspan=2)
-    
-    self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote)
+    self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote, default=Tkinter.ACTIVE)
     self.voteButton.grid(row=2, column=2, sticky=Tkinter.E)
-  
+    
+    self.bind("<Return>", self.doVote)
+    
   def doVote(self):
-    print "Login info: %s/%s" % (self.usernameEdit.get(), self.passwordEdit.get())
-
+    username, password = self.username.get(), self.password.get()
+    
+    if username is '' or password is '':
+      tkMessageBox.showerror('Error', 'Fill out username and password')
+      return
+    
+    threading.Thread(target=gui_do_work, args=(username, password, self.progress, self.voteButton)).run()
+    
+def gui_do_work(username, password, progress, button):
+  button.config(state=Tkinter.DISABLED)
+    
+  def enable(pval, text):
+    progress.set(pval, text)
+    button.config(state=Tkinter.NORMAL)
+  
+  progress.set_text("Logging in...")
+  
+  cookie = download_cookie(username, password)    
+  if cookie is None:
+    enable(0, "Authentication error.")
+    return
+  progress.set_text("Logged in. Checking votes")
+  
+  vote_urls = get_urls(cookie)    
+  if vote_urls is None:
+    enable(0, "Nothing to vote for right now.")
+    return
+  progress.set_text("Downloaded vote site list")
+  
+  progress.set_maximum(len(vote_urls))
+  failed = 0
+  for i, request in enumerate(vote_urls):
+    retval = do_vote(cookie, request)
+    progress.set_progress(i + 1)
+    if retval:
+      progress.set_text("Voted sucessfully!")
+    else:
+      progress.set_text("Couldn't vote for some site..")
+      failed += 1
+  
+  enable(len(vote_urls), "Complete! Failed to vote %d times." % failed)
+  
 if __name__ == "__main__":
-  frame = GUIFramework()
-  frame.mainloop()
+  main()
   
