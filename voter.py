@@ -162,7 +162,7 @@ class GUIFramework(Tkinter.Frame):
     self.username.focus_set()
     
     Tkinter.Label(self, text="Password ").grid(row=1, column=0, sticky=Tkinter.W)
-    self.password = Tkinter.Entry(self)
+    self.password = Tkinter.Entry(self, show="*")
     self.password.grid(row=1, column=1, columnspan=2, sticky=Tkinter.E)
     
     self.progress = ProgressBar(self, maximum=14, width=250, height=30)
@@ -170,8 +170,6 @@ class GUIFramework(Tkinter.Frame):
     
     self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote, default=Tkinter.ACTIVE)
     self.voteButton.grid(row=2, column=2, sticky=Tkinter.E)
-    
-    self.bind("<Return>", self.doVote)
     
   def doVote(self):
     username, password = self.username.get(), self.password.get()
