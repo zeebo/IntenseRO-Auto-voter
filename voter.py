@@ -109,8 +109,14 @@ class GUIFramework(Tkinter.Frame):
     self.master.title("Voter")
     self.grid(padx=10, pady=10)
     self.CreateWidgets()
-    self.master.geometry('+500-500')
-    self.master.lift()
+    self.CenterWindow()
+    
+  def CenterWindow(self, width=265, height=104):
+    mw = self.master.winfo_screenwidth()
+    mh = self.master.winfo_screenheight()
+    x, y = (mw - width)/2, (mh - height)/2
+    print x, y
+    self.master.geometry('+%d+%d' % (x, y))
     
   def CreateWidgets(self):
     self.usernameLabel = Tkinter.Label(self, text="Username ")
@@ -126,7 +132,7 @@ class GUIFramework(Tkinter.Frame):
     self.passwordEdit.grid(row=1, column=1, columnspan=2)
     
     self.voteButton = Tkinter.Button(self, text="Vote", command=self.doVote)
-    self.voteButton.grid(row=2, column=2)
+    self.voteButton.grid(row=2, column=2, sticky=Tkinter.E)
   
   def doVote(self):
     print "Login info: %s/%s" % (self.usernameEdit.get(), self.passwordEdit.get())
