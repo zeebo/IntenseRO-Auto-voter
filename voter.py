@@ -66,6 +66,8 @@ def get_urls(cookie, debug_level = 0):
     return None
 
 def do_vote(cookie, request, debug_level = 0):
+  #Just send a connection to the specified request
+  #and if it redirects us, it worked
   connection = httplib.HTTPConnection(host)
   connection.set_debuglevel(debug_level)
   connection.request("GET", request, headers = {'Cookie': cookie})  
@@ -82,8 +84,8 @@ def do_votes(cookie, urls, debug_level = 0):
 
 def main():
   parser = optparse.OptionParser("usage: %prog [-d] [-c username password]")
-  parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="Turns on verbose debugging", default=0)
-  parser.add_option('-c', '--command', dest='command', action='store_true', help="Runs the program as a command line interface", default=False)
+  parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="turns on verbose debugging", default=0)
+  parser.add_option('-c', '--command', dest='command', action='store_true', help="runs the program as a command line interface", default=False)
   (options, args) = parser.parse_args()
 
   if options.command:
@@ -152,7 +154,6 @@ class GUIFramework(Tkinter.Frame):
     self.master.title("Voter")
     self.grid(padx=5, pady=5)
     self.CreateWidgets()
-    self.columnconfigure(1,weight=1)
     
   def CreateWidgets(self):
     Tkinter.Label(self, text="Username ").grid(row=0, column=0, sticky=Tkinter.W)
