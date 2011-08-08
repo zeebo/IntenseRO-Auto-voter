@@ -13,7 +13,7 @@ import optparse
 import Tkinter
 import tkMessageBox
 import threading
-import time
+import datetime
 
 host = 'www.register.intense-ro.net'
 
@@ -83,7 +83,7 @@ def do_votes(cookie, urls, debug_level = 0):
       print "Unable to vote for %s" % request
 
 def main():
-  parser = optparse.OptionParser("usage: %prog [-d] [-c username password]")
+  parser = optparse.OptionParser("usage: %prog [-d] [-c username password [output file]]")
   parser.add_option('-d', '--debug', dest='debug', action='store_const', const=1, help="turns on verbose debugging", default=0)
   parser.add_option('-c', '--command', dest='command', action='store_true', help="runs the program as a command line interface", default=False)
   (options, args) = parser.parse_args()
@@ -95,13 +95,22 @@ def main():
     frame.mainloop()
 
 def command_main(parser, options, args):
-  if len(args) != 2:
+  if len(args) != 2 and len(args) != 3:
     parser.print_help()
     print "\nInvalid number of arguments.\n"
     sys.exit(1)
-      
-  username, password, debug_level = args[0], args[1], options.debug  
-  cookie = download_cookie(username, password, debug_level)  
+
+  
+  username, password, debug_level = args[0], args[1], options.debug
+
+  if len(args) == 3:
+    #redirect stdout to output
+    sys.stdout = open(args[2], 'a')
+  
+
+  print datetime.datetime.now().isoformat(), "Attempting to vote"
+
+  cookie = download_cookie(username, password, debug_level)
   if cookie is None:
     print "Authentication error"
     sys.exit(1)
